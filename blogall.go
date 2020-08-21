@@ -1,15 +1,21 @@
+/*
+ * This program is used to access the information for all blog posts from lauchlantoal.com
+ * It is designed to work as an AWS Lambda function, proxied through AWS APIGateway
+ */
+
 package main
 
 import (
 	"os"
-  "encoding/json"
-  "log"
-  "database/sql"
-  _ "github.com/go-sql-driver/mysql"
+	"encoding/json"
+	"log"
+	"database/sql"
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 )
 
+//Frontend expects a JSON response with url, title, and desc (description)
 type Post struct {
 	Url string `json:"url"`
 	Title string `json:"title"`
@@ -18,11 +24,13 @@ type Post struct {
 
 func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	
+	//Header must set appropriate content type and origin options to avoid CORS restrictions
 	var header = make(map[string]string)
 	header["Access-Control-Allow-Origin"] = "*"
 	header["Content-Type"] = "text/json"
 	header["X-Content-Type-Options"] = "nosniff"
 	
+	//Database connection string is stored as environment variable so code can be freely shared
 	dsn, envFound := os.LookupEnv("DSN")
 	if !envFound {
 		return events.APIGatewayProxyResponse{
@@ -36,15 +44,20 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	if err != nil {
 		log.Fatal(err)
 	}
+	//Ensure database connections are always closed when function exits with defer
 	defer db.Close()
 	
+	//Success = true if no error
 	var success bool = true
-	var posts []Post
+	
 	rows, err := db.Query("SELECT posturl, posttitle, postdesc FROM posts WHERE posttype = 0 ORDER BY postdate DESC")
 	if err != nil {
 		success = false
 	}
 	defer rows.Close()
+	
+	//Load the database data into a slice of Post structs to return
+	var posts []Post
 	if success {
 		for rows.Next() {
 			var post Post
@@ -57,6 +70,7 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 		}
 	}
 	
+	//Return content or appropriate error
 	if success {
 		jsondata, err := json.Marshal(posts)
 		if err == nil {

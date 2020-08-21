@@ -1,15 +1,21 @@
+/*
+ * This program is used to access the information for a single blog post from lauchlantoal.com
+ * It is designed to work as an AWS Lambda function, proxied through AWS APIGateway
+ */
+
 package main
 
 import (
 	"os"
-  "encoding/json"
-  "log"
-  "database/sql"
-  _ "github.com/go-sql-driver/mysql"
+	"encoding/json"
+	"log"
+	"database/sql"
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 )
 
+//Frontend expects a JSON response with title and content
 type Post struct {
 	Title string `json:"title"`
 	Content string `json:"content"`
@@ -17,11 +23,13 @@ type Post struct {
 
 func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	
+	//Header must set appropriate content type and origin options to avoid CORS restrictions
 	var header = make(map[string]string)
 	header["Access-Control-Allow-Origin"] = "*"
 	header["Content-Type"] = "text/json"
 	header["X-Content-Type-Options"] = "nosniff"
 	
+	//Database connection string is stored as environment variable so code can be freely shared
 	dsn, envFound := os.LookupEnv("DSN")
 	if !envFound {
 		return events.APIGatewayProxyResponse{
@@ -30,21 +38,27 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 				StatusCode: 500,
 			}, nil
 	}
+	
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
 		log.Fatal(err)
 	}
+	//Ensure database connections are always closed when function exits with defer
 	defer db.Close()
 	
-	var url = request.PathParameters["post"];
+	var url = request.PathParameters["post"]
 	
+	//Success = true if no error, found = true if desired post exists
 	var success bool = true
 	var found bool = false
+	
 	rows, err := db.Query("SELECT posttitle, posttext FROM posts WHERE posturl = ?", url)
 	if err != nil {
 		success = false
 	}
 	defer rows.Close()
+	
+	//Load the database data into a Post struct to return
 	var post Post
 	if success {
 		for rows.Next() {
@@ -56,6 +70,7 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 		}
 	}
 	
+	//Return content or appropriate error
 	if success && found {
 		jsondata, err := json.Marshal(post)
 		if err == nil {

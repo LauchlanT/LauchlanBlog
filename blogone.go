@@ -17,6 +17,11 @@ type Post struct {
 
 func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	
+	var header = make(map[string]string)
+	header["Access-Control-Allow-Origin"] = "*"
+	header["Content-Type"] = "text/json"
+	header["X-Content-Type-Options"] = "nosniff"
+	
 	dsn, envFound := os.LookupEnv("DSN")
 	if !envFound {
 		return events.APIGatewayProxyResponse{
@@ -50,10 +55,7 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 			}
 		}
 	}
-	var header = make(map[string]string)
-	header["Access-Control-Allow-Origin"] = "*"
-	header["Content-Type"] = "text/json"
-	header["X-Content-Type-Options"] = "nosniff"
+	
 	if success && found {
 		jsondata, err := json.Marshal(post)
 		if err == nil {

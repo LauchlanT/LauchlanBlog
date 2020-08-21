@@ -1,6 +1,6 @@
 # Github Action to build, zip, and deploy Go code to AWS Lambda
 on: [push]
-name: Build and Deploy
+name: Build and Deploy BlogOne
 jobs:
   deploy-source:
     name: Build and Deploy Go to AWS Lambda

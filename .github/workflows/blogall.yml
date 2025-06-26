@@ -27,11 +27,11 @@ jobs:
         go get github.com/aws/aws-lambda-go/lambda
     - name: Build
       # Adjust names as appropriate here to build the correct file
-      run: go build ./blogall.go
+      run: go build -o bootstrap ./blogall.go
     - name: zip
       uses: montudor/action-zip@v0.1.0
       with:
-        args: zip -qq -r ./blogall.zip ./blogall
+        args: zip -qq -r ./blogall.zip ./bootstrap
     - name: Lambda Deploy
       uses: appleboy/lambda-action@master
       with:

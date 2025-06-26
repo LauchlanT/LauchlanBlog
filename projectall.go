@@ -63,7 +63,7 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	if success {
 		for rows.Next() {
 			var post Post
-			if err := rows.Scan(&post.Url, &post.Title, &post.Desc); err != nil {
+			if err := rows.Scan(&post.Url, &post.Thumbnail, &post.Title, &post.Desc); err != nil {
 				success = false
 				break
 			} else {

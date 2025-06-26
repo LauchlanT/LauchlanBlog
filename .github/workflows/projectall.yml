@@ -1,6 +1,6 @@
 # Github Action to build, zip, and deploy Go code to AWS Lambda
 on: [push]
-name: Build and Deploy BlogAll
+name: Build and Deploy ProjectAll
 jobs:
   deploy-source:
     name: Build and Deploy Go to AWS Lambda
@@ -21,21 +21,22 @@ jobs:
     - name: Dependencies
       # Must install each dependency in the container
       run: |
+        go mod init lauchlanblog
         go get github.com/go-sql-driver/mysql
         go get github.com/aws/aws-lambda-go/events
         go get github.com/aws/aws-lambda-go/lambda
     - name: Build
       # Adjust names as appropriate here to build the correct file
-      run: go build ./blogall.go
+      run: go build ./projectall.go
     - name: zip
       uses: montudor/action-zip@v0.1.0
       with:
-        args: zip -qq -r ./blogall.zip ./blogall
+        args: zip -qq -r ./projectall.zip ./projectall
     - name: Lambda Deploy
       uses: appleboy/lambda-action@master
       with:
         aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws_region: us-east-1
-        function_name: BlogGetAll
-        zip_file: blogall.zip
+        function_name: ProjectGetAll
+        zip_file: projectall.zip
